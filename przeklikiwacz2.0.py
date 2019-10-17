@@ -61,8 +61,35 @@ class View(tk.Toplevel):
                                        text='PRZEKLIKUJ')
         self.clickerButton.pack(side="top")
         
+        
+
+        
+        self.pauseButton = tk.Button(self,
+                                     height = 3,
+                                     width = 15,
+                                     font='Helvetica 18 bold',
+                                     text='PAUZA')
+        self.pauseButton.pack(side="top")
+      
+        
+
+        
+
+#        self.edit = tk.Button(self, text="edytuj plik konfiguracyjny",width=25,font='Helvetica 11', command=self.open_config)
+#        self.edit.pack()
+#
+#        self.reload = tk.Button(self, text="przeładuj konfigurację",width=25,font='Helvetica 11', command=self.reload_config)
+#        self.reload.pack()
+#
+#        self.quit = tk.Button(self, text="QUIT", font='Helvetica 11', command=self.master.destroy)
+#        self.quit.pack(side="bottom")
+        
         self.infoBox = tk.Label(self,text="elo")
         self.infoBox.pack(side="top")
+
+
+        
+        
         self.winfo_toplevel().title("Przeklikiwacz 1.0")
         self.config(padx=30,pady=30)
 
@@ -82,11 +109,14 @@ class View(tk.Toplevel):
 class Controller:
     def __init__(self, root):
         self.model = Model()
-        ##przypinanie callback do observable
-        self.model.currentAction.addCallback (self.currentAction_changed)
         self.view = View (root)
+        
+        ##przypinanie funkcji kontrolera do widoku
         self.view.clickerButton.config (command = lambda: self.currentAction_set('przeklikiwanie'))
-        #przypinanie 
+        self.view.pauseButton.config   (command = lambda: self.currentAction_set('pauza'))
+
+        ##przypinanie callback do observable        
+        self.model.currentAction.addCallback (self.currentAction_changed)
         self.currentAction_changed('nic')
         
     def browser_click_targets_in_all_urls(self):
