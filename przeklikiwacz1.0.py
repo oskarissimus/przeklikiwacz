@@ -1,6 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 from time import sleep
 import csv
 import tkinter as tk
@@ -29,6 +27,7 @@ print( 'os.getcwd is', os.getcwd() )
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
+        self.sites_targets_dict = {}
         self.sites_targets_path = os.path.join(bundle_dir, 'sites_targets.csv')
         self.master = master
         self.pack(padx=30,pady=30,ipadx=20,ipady=20)
@@ -44,15 +43,12 @@ class Application(tk.Frame):
     def open_browser(self):
         
         print (self.sites_targets_path)
-        with open(self.sites_targets_path) as csv_file:
-            csv_reader = csv.reader(csv_file, delimiter=',')
-            self.sites_targets = list(csv_reader)
-            self.sites_targets_dict = {rows[0]:rows[1] for rows in self.sites_targets}
-            chromedriver_path = os.path.join(bundle_dir, 'chromedriver.exe')
-            chromedriver_path = os.path.join(chromedriver_path, 'chromedriver.exe')
-            print (chromedriver_path)
-            self.browser = webdriver.Chrome(chromedriver_path)
-            threading.Thread(target=self.open_tabs).start()
+        self.parse_config()
+        chromedriver_path = os.path.join(bundle_dir, 'chromedriver.exe')
+        chromedriver_path = os.path.join(chromedriver_path, 'chromedriver.exe')
+        print (chromedriver_path)
+        self.browser = webdriver.Chrome(chromedriver_path)
+        threading.Thread(target=self.open_tabs).start()
 
 
     def open_tabs(self):
@@ -62,33 +58,37 @@ class Application(tk.Frame):
         self.edit.config(state="disabled")
         self.reload.config(state="disabled")
         self.currently_open_tabs = []
+        
         for window in self.browser.window_handles:
             self.browser.switch_to.window(window) 
-            self.currently_open_tabs.append(self.browser.current_url)
-            if self.browser.current_url not in self.sites_targets_dict:
+            parsed_url = urlparse(self.browser.current_url)
+            self.currently_open_tabs.append(parsed_url.netloc)
+            if parsed_url.netloc not in self.sites_targets_dict:
                 self.to_close.append(window)
-                print("oznaczam do ununięcia {}".format(window))
+                print("oznaczam do ununięcia {} {}".format(parsed_url.netloc,window))
                 
-        
+        print("self.currently_open_tabs: {}".format(self.currently_open_tabs))
         for idx,row in enumerate(self.sites_targets):
-            if row[0] not in self.currently_open_tabs:
+            print ("{} {}".format(idx,row))
+            parsed_url = urlparse(row[0])
+            if parsed_url.netloc not in self.currently_open_tabs:
                 self.browser.execute_script("window.open('{}','_blank');".format(row[0]))
-                print (row)
+                print ("otwieram kartę {}".format(row[0]))
                 
                 
         for tab in self.to_close:
             sleep(1)
             try:
                 self.browser.switch_to.window(tab)
-                print("zamykam {}".format(window))
+                print("zamykam {} {}".format(self.browser.current_url, tab))
                 self.browser.close()
                 print("zamknięte")
                 self.to_close.remove(tab)
             except:
-                print ("nie da się zamknąć")
+                print ("nie da się zamknąć {}".format(tab))
         self.przeklikuj_button.config(state="normal")
         self.pauza_button.config(state="normal")
-        self.edit.config(state="normal")
+        self.edit.config(state="normal") 
         self.reload.config(state="normal")
         self.label.configure(text="konfiguracja załadowana")
 
@@ -127,12 +127,18 @@ class Application(tk.Frame):
         threading.Thread(target=os.system, args=("notepad {}".format(self.sites_targets_path),)).start()
         
         
-    def reload_config(self):
+        
+    def parse_config(self):
         with open(self.sites_targets_path) as csv_file:
             csv_reader = csv.reader(csv_file, delimiter=',')
             self.sites_targets = list(csv_reader)
-            parsed_url = urlparse(rows[0])
-            self.sites_targets_dict = {parsed_url.netloc:rows[1] for rows in self.sites_targets}
+            for rows in self.sites_targets:
+                parsed_url = urlparse(rows[0])
+                self.sites_targets_dict[parsed_url.netloc] = rows[1]
+
+        
+    def reload_config(self):
+        self.parse_config()
         threading.Thread(target=self.open_tabs).start()
 
         
@@ -165,7 +171,7 @@ class Application(tk.Frame):
         print("przeklikuje")
         self.windows = self.browser.window_handles
         for idx,row in enumerate(self.sites_targets):
-            #print ("jestem w pętli")
+#           print ("jestem w pętli")
             if self.t.do_run:
                 #print ("jestem w ifie")
                 
@@ -239,7 +245,7 @@ class Application(tk.Frame):
             
             self.browser.switch_to.frame(index)
             
-            self.find_all_iframes(driver)
+            self.find_all_iframes()
             self.browser.switch_to.parent_frame()
 
     def click_in_all_iframes(self, ntlc):
