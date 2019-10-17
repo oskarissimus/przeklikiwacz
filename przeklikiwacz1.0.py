@@ -1,6 +1,4 @@
 from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 from time import sleep
 import csv
 import tkinter as tk
@@ -173,7 +171,7 @@ class Application(tk.Frame):
         print("przeklikuje")
         self.windows = self.browser.window_handles
         for idx,row in enumerate(self.sites_targets):
-            #print ("jestem w pętli")
+#           print ("jestem w pętli")
             if self.t.do_run:
                 #print ("jestem w ifie")
                 
@@ -247,7 +245,7 @@ class Application(tk.Frame):
             
             self.browser.switch_to.frame(index)
             
-            self.find_all_iframes(driver)
+            self.find_all_iframes()
             self.browser.switch_to.parent_frame()
 
     def click_in_all_iframes(self, ntlc):
